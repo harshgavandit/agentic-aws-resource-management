@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from processor import process_request
+from backend.core.processor import process_request
 
 app = FastAPI()
 

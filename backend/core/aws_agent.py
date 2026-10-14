@@ -2,9 +2,9 @@ import anthropic
 import json
 import os
 from dotenv import load_dotenv
-from aws_config import AWSConfig
+from backend.config.aws_config import AWSConfig
 from typing import Dict, Any, List
-from prompt import SYSTEM_PROMPT, SUMMARY_PROMPT
+from backend.config.prompt import SYSTEM_PROMPT, SUMMARY_PROMPT
 from datetime import datetime, timedelta
 
 load_dotenv()
@@ -27,8 +27,8 @@ class AWSAgenticAgent:
         if not self.aws_config.validate_connection():
             raise Exception("AWS connection failed")
             
-        print("✅ AWS connection successful!")
-        print("ℹ️  Anthropic connection will be tested on first use")
+        print("AWS connection successful!")
+        print("ℹAnthropic connection will be tested on first use")
 
     def _build_system_prompt(self) -> str:
         """Build system prompt for AWS operations"""
@@ -36,7 +36,7 @@ class AWSAgenticAgent:
 
     def _format_tools(self) -> List[Dict]:
         """Define tools for Claude"""
-        json_path = os.path.join(os.path.dirname(__file__), "tools.json")
+        json_path = os.path.join(os.path.dirname(__file__), "..", "tools", "tools.json")
         with open(json_path, "r") as f:
             tools = json.load(f)
         return tools 
@@ -50,9 +50,9 @@ class AWSAgenticAgent:
             session = self.aws_config.get_session()
             cloudcontrol = session.client('cloudcontrol', region_name=region)
             
-            print(f"🔧 Executing {operation} on {resource_type}")
-            print(f"🔧 Properties: {properties}")
-            print(f"🔧 Region: {region}")
+            print(f"Executing {operation} on {resource_type}")
+            print(f"Properties: {properties}")
+            print(f"Region: {region}")
             
             if operation == "create":
                 try:
@@ -60,7 +60,7 @@ class AWSAgenticAgent:
                         TypeName=resource_type,
                         DesiredState=json.dumps(properties) if properties else "{}"
                     )
-                    print(f"🔧 AWS Response: {response}")
+                    print(f"AWS Response: {response}")
                     
                     # Check if we actually got a valid response
                     if 'ProgressEvent' not in response:
@@ -92,7 +92,7 @@ class AWSAgenticAgent:
                     }
                     
                 except Exception as create_error:
-                    print(f"🔧 Create Resource Error: {create_error}")
+                    print(f"Create Resource Error: {create_error}")
                     return {
                         "status": "error",
                         "operation": operation,
@@ -104,7 +104,7 @@ class AWSAgenticAgent:
             elif operation == "list":
                 try:
                     response = cloudcontrol.list_resources(TypeName=resource_type)
-                    print(f"🔧 List Response: {response}")
+                    print(f"List Response: {response}")
                     
                     resources = response.get('ResourceDescriptions', [])
                     return {
@@ -117,7 +117,7 @@ class AWSAgenticAgent:
                     }
                     
                 except Exception as list_error:
-                    print(f"🔧 List Resources Error: {list_error}")
+                    print(f"List Resources Error: {list_error}")
                     return {
                         "status": "error",
                         "operation": operation,
@@ -132,7 +132,7 @@ class AWSAgenticAgent:
                         TypeName=resource_type,
                         Identifier=identifier
                     )
-                    print(f"🔧 Read Response: {response}")
+                    print(f"Read Response: {response}")
                     
                     return {
                         "status": "success",
@@ -144,7 +144,7 @@ class AWSAgenticAgent:
                     }
                     
                 except Exception as read_error:
-                    print(f"🔧 Read Resource Error: {read_error}")
+                    print(f"Read Resource Error: {read_error}")
                     return {
                         "status": "error",
                         "operation": operation,
@@ -161,7 +161,7 @@ class AWSAgenticAgent:
                 }
                 
         except Exception as e:
-            print(f"🔧 General AWS Operation Error: {e}")
+            print(f"General AWS Operation Error: {e}")
             return {
                 "status": "error",
                 "operation": operation,
@@ -226,7 +226,7 @@ class AWSAgenticAgent:
         )
             
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-latest",
+                model="claude-haiku-4-5",
                 max_tokens=500,
                 messages=[{"role": "user", "content": summary_prompt}]
             )
@@ -243,7 +243,7 @@ class AWSAgenticAgent:
         try:
             # Claude API call with tools
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-latest",
+                model="claude-haiku-4-5",
                 max_tokens=2000,
                 system=self._build_system_prompt(),
                 messages=history,
@@ -288,6 +288,6 @@ class AWSAgenticAgent:
             return response_content
 
         except Exception as e:
-            error_msg = f"❌ Error processing request: {str(e)}"
+            error_msg = f"Error processing request: {str(e)}"
             print(error_msg)
             return error_msg

@@ -5,6 +5,12 @@
 .env.test
 .env.production
 *.env
+.env.*
+!.env.example
+
+# Local assistant permissions and machine-specific settings
+.claude/
+.codex/
 
 # Python
 __pycache__/
